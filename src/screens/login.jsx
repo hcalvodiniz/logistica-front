@@ -34,7 +34,8 @@ export class Login extends Component {
             MySwal.fire({
                 title: (response.data.success) ? '¡Éxito!' : 'Oops',
                 icon: (response.data.success) ? 'success' : 'error',
-                html: response.data.msg
+                html: response.data.msg,
+                timer: 1500
             })
             this.props.setToken({...response.data.data, token: response.data.data.password})
         })

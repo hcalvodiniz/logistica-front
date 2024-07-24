@@ -227,7 +227,7 @@ export class Trucks extends Component {
                     <div className="card-header d-flex justify-content-between align-items-center">
                         <span> Camiones </span>
                         <div className="btn-group">
-                            <button className="btn btn-sm btn-outline-secondary" type="button" onClick={() => { this.setState({ editStatus: false }); this.modalStatus() }}><i className="bi bi-plus-circle"></i></button>
+                            <button className="btn btn-sm btn-outline-dark" type="button" onClick={() => { this.setState({ editStatus: false }); this.modalStatus() }}><i className="bi bi-plus-circle"></i></button>
                         </div>
                     </div>
                     <div className="card-body">

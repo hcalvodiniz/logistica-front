@@ -32,7 +32,7 @@ export class Drivers extends Component {
             invalidName: false,
             invalidLicense: false,
             invalidExpiration: false,
-            today: ''
+            today: '',
         }
     }
 
@@ -162,7 +162,7 @@ export class Drivers extends Component {
                     <div className="card-header d-flex justify-content-between align-items-center">
                         <span>Conductores</span>
                         <div className="btn-group">
-                            <button className="btn btn-sm btn-outline-secondary" type="button" onClick={ () => {  this.setState({ editStatus: false }); this.setState({ modal: true }) }}><i className="bi bi-plus-circle"></i></button>
+                            <button className="btn btn-sm btn-outline-dark" type="button" onClick={ () => {  this.setState({ editStatus: false }); this.setState({ modal: true }) }}><i className="bi bi-plus-circle"></i></button>
                         </div>
                     </div>
                     <div className="card-body">

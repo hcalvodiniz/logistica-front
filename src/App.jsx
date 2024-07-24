@@ -6,6 +6,7 @@ import Drivers from './screens/drivers'
 import Users from './screens/users'
 import Login from './screens/login'
 import useToken from './components/useToken'
+import Travels from './screens/travels'
 
 function App() {
   const [module, setModule] = useState('');
@@ -15,15 +16,13 @@ function App() {
     Drivers: (<Drivers />),
     Trucks:(<Trucks />),
     Users:(<Users />),
-    Viajes: (<></>),
+    Viajes: (<Travels />),
   }
 
   if(!token) {
     return <Login setToken={setToken} />
   }
 
-  console.log(token)
-  
   return (
     <div>
       <MyNavBar goToModule={setModule} userData={token} setToken={setToken} />
