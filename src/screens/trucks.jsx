@@ -1,4 +1,4 @@
-import { Component } from "react";
+import React, { Component } from "react";
 import axios from "axios";
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
@@ -30,20 +30,17 @@ export class Trucks extends Component {
                 mileage: '',
                 serial_number: ''
             },
+            files: null,
             modal: false,
+            modalC: false,
             editStatus: false,
             invalidBrand: false,
             invalidModel: false,
             invalidYear: false,
-            invalideMile: false,
+            invalidMile: false,
             invalidSerial: false,
         }
-        this.modalStatus = this.modalStatus.bind(this)
-        this.brandChange = this.brandChange.bind(this)
-        this.modelChange = this.modelChange.bind(this)
-        this.yearChange = this.yearChange.bind(this)
-        this.mileageChange = this.mileageChange.bind(this)
-        this.serialChange = this.serialChange.bind(this)
+        this.fileInput = React.createRef()
     }
 
     getTrucks = () => {
@@ -101,13 +98,14 @@ export class Trucks extends Component {
             invalidBrand: false,
             invalidModel: false,
             invalidYear: false,
-            invalideMile: false,
+            invalidMile: false,
             invalidSerial: false,
         })
     }
 
     sendTruckData = () => {
         let url = (this.state.truckData.id) ? 'http://localhost/services/truck/update' : 'http://localhost/services/truck/store'
+        const form = new FormData()
         this.clearValidation()
         if(this.state.truckData.brand == '') { this.setState({ invalidBrand: true }) }
         if(this.state.truckData.model == '') { this.setState({ invalidModel: true }) }
@@ -115,22 +113,27 @@ export class Trucks extends Component {
         if(this.state.truckData.mileage == '') { this.setState({ invalideMile: true }) }
         if(this.state.truckData.serial_number == '') { this.setState({ invalidSerial: true }) }
 
-        axios.post(url, this.state.truckData, {
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-            }
-        })
+        for(const [key, value] of Object.entries(this.state.truckData)) {
+            form.append(key, value)
+        }
+        if(this.state.files !== null) {
+            [...this.state.files].forEach((file) => {
+                form.append('files[]', file, file.name)
+            })
+        }
+            
+        axios.post(url, form)
         .then((response) => {
             Swal.fire({
                 title: (response.data.success) ? 'Éxito!' : 'Oops',
                 icon: (response.data.success) ? 'success' : 'error',
-                text: response.data.msg
+                html: response.data.msg
             })
             if(response.data.success){
                 this.modalStatus()
                 this.getTrucks()
             }
+            this.fileInput.current.value = null
         })
         .catch((error) => {
             Swal.fire({
@@ -139,6 +142,35 @@ export class Trucks extends Component {
                 text: error.message
             })
         })
+    }
+
+    handleChangeFile = (e) => {
+        if(e.target.files) {
+            this.setState({ files: e.target.files })
+        }
+    }
+
+    getPhotos = (event) => {
+        var value = (event.target.nodeName === 'BUTTON') ? event.target.value : event.target.parentElement.value
+
+        axios.get(`http://localhost/services/truck/get-photos/${value}`, {
+            headers: {
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            }
+        })
+        .then((response) => {
+            if (!response.data.success) {
+                MySwal.fire({
+                    title: 'Oops',
+                    icon: 'warning',
+                    text: response.data.msg
+                })
+            } else {
+                console.log(response.data.data)
+            }
+        })
+        .catch((error) => console.log(error))
     }
 
     deleteTruck = (event) => {
@@ -172,26 +204,6 @@ export class Trucks extends Component {
         })
     }
 
-    brandChange(event) {
-        this.setState({ truckData: { ...this.state.truckData, brand: event.target.value } })
-    }
-
-    modelChange(event) {
-        this.setState({ truckData: { ...this.state.truckData, model: event.target.value } })
-    }
-
-    yearChange(event) {
-        this.setState({ truckData: { ...this.state.truckData, year: event.target.value } })
-    }
-
-    mileageChange(event) {
-        this.setState({ truckData: { ...this.state.truckData, mileage: event.target.value } })
-    }
-    
-    serialChange(event) {
-        this.setState({ truckData: { ...this.state.truckData, serial_number: event.target.value } })
-    }
-
     componentDidMount() {
         this.getTrucks()
     }
@@ -214,6 +226,7 @@ export class Trucks extends Component {
                 <td>{truck.serial_number}</td>
                 <td>
                     <button className="btn btn-sm btn-primary rounded-circle" value={truck.id} onClick={this.editTruck} type="button"><i className="bi bi-pencil-square"></i></button>
+                    <button className="btn btn-sm btn-success rounded-circle ms-1" value={truck.id} onClick={this.getPhotos}><i className="bi bi-eye-fill"></i></button>
                     <button className="btn btn-sm btn-danger rounded-circle ms-1" value={truck.id} onClick={this.deleteTruck} type="button"><i className="bi bi-trash"></i></button>
                 </td>
             </tr>
@@ -252,24 +265,28 @@ export class Trucks extends Component {
                 <MyModal modalId="truckModal" show={this.state.modal} handleClose={() => this.modalStatus() } modalTitle={ (this.state.editStatus) ? 'Editar Camión' : 'Crear Camión' }>
                     <div className="mb-3">
                         <Form.Label>Marca</Form.Label>
-                        <Form.Control type="text" id="brand" isInvalid={this.state.invalidBrand} value={this.state.truckData.brand} onChange={this.brandChange}></Form.Control>
+                        <Form.Control type="text" id="brand" isInvalid={this.state.invalidBrand} value={this.state.truckData.brand} onChange={(event) => this.setState({ truckData: { ...this.state.truckData, brand: event.target.value } })}></Form.Control>
                     </div>
                     <div className="mb-3">
                         <Form.Label>Modelo</Form.Label>
-                        <Form.Control type="text" id="model" isInvalid={this.state.invalidModel} value={this.state.truckData.model} onChange={this.modelChange}></Form.Control>
+                        <Form.Control type="text" id="model" isInvalid={this.state.invalidModel} value={this.state.truckData.model} onChange={(event) => this.setState({ truckData: { ...this.state.truckData, model: event.target.value } })}></Form.Control>
                     </div>
                     <div className="mb-3">
                         <Form.Label>Año</Form.Label>
-                        <Form.Control type="text" id="year" isInvalid={this.state.invalidYear} value={this.state.truckData.year} onChange={this.yearChange}></Form.Control>
+                        <Form.Control type="text" id="year" isInvalid={this.state.invalidYear} value={this.state.truckData.year} onChange={(event) => this.setState({ truckData: { ...this.state.truckData, year: event.target.value } })}></Form.Control>
                     </div>
                     <div className="mb-3">
                         <Form.Label>Kilometraje</Form.Label>
-                        <Form.Control type="text" id="mileage" isInvalid={this.state.invalideMile} value={this.state.truckData.mileage} onChange={this.mileageChange}></Form.Control>
+                        <Form.Control type="text" id="mileage" isInvalid={this.state.invalidMile} value={this.state.truckData.mileage} onChange={(event) => this.setState({ truckData: { ...this.state.truckData, mileage: event.target.value } })}></Form.Control>
                     </div>
                     <div className="mb-3">
                         <Form.Label>Serie</Form.Label>
-                        <Form.Control type="text" id="serial_number" isInvalid={this.state.invalidSerial} value={this.state.truckData.serial_number} onChange={this.serialChange}></Form.Control>
+                        <Form.Control type="text" id="serial_number" isInvalid={this.state.invalidSerial} value={this.state.truckData.serial_number} onChange={(event) => this.setState({ truckData: { ...this.state.truckData, serial_number: event.target.value } })}></Form.Control>
                     </div>
+                    <Form.Group controlId="file-upload" className="mb-3">
+                        <Form.Label>Carga de Fotos</Form.Label>
+                        <Form.Control type="file" multiple accept="image/jpeg, image/png" onChange={this.handleChangeFile} ref={this.fileInput} capture="enviroment" />
+                    </Form.Group>
                     <div className="mb-3 d-flex justify-content-end">
                         <button className="btn btn-danger" type="button" onClick={() => { this.modalStatus() }}>Cancelar</button>
                         <button className="btn btn-primary ms-2" type="button" onClick={() => this.sendTruckData()}>Actualizar</button>
